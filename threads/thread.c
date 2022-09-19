@@ -340,11 +340,11 @@ void
 thread_set_priority (int new_priority) {
 	/* Added(project 1) */
 	// If current thread's priority changed, we should schedule again
-	// if( thread_current ()->priority != new_priority ){
-	// 	thread_current ()->priority = new_priority;
-	// 	test_max_priority();
-	// }
-	thread_current ()->priority = new_priority;
+	if( thread_current ()->priority != new_priority ){
+		thread_current ()->priority = new_priority;
+		test_max_priority();
+	}
+	// thread_current ()->priority = new_priority;
 	priority_preemption();
 
 }
@@ -710,11 +710,10 @@ bool cmp_priority (const struct list_elem *a, const struct list_elem *b, void *a
 	priority preemption code */
 
 void priority_preemption(void) {
-	struct thread *cur = thread_current();
-	struct thread *front = list_entry(list_front(&ready_list), struct thread, elem);
-	
-	if(!list_empty(&ready_list) && cur->priority < front->priority){
-		thread_yield();
-	}
+   struct thread *cur = thread_current();
+   struct thread *front;
+   if(!list_empty(&ready_list)){
+      front = list_entry(list_front(&ready_list), struct thread, elem);
+      if((cur->priority) < (front->priority)) thread_yield();
+   }
 }
-
