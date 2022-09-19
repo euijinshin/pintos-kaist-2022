@@ -231,11 +231,12 @@ void
 thread_block (void) {
 	ASSERT (!intr_context ());
 	ASSERT (intr_get_level () == INTR_OFF);
-	printf("thread_block CH01\n");
+	struct thread *t = running_thread ();
+	//printf("thread_block CH02 t->tid: %d, t->status: %d. THREAD_RUNNING: %d, t->status == THREAD_RUNNING: %d\n", t->tid, t->status, THREAD_RUNNING, t->status == THREAD_RUNNING);
 	thread_current ()->status = THREAD_BLOCKED;
-	printf("thread_block CH02\n");
+	//printf("thread_block CH03\n");
 	schedule ();
-	printf("thread_block CH03\n");
+	//printf("thread_block CH04\n");
 }
 
 /* Transitions a blocked thread T to the ready-to-run state.
@@ -271,13 +272,13 @@ thread_name (void) {
 struct thread *
 thread_current (void) {
 	struct thread *t = running_thread ();
-
 	/* Make sure T is really a thread.
 	   If either of these assertions fire, then your thread may
 	   have overflowed its stack.  Each thread has less than 4 kB
 	   of stack, so a few big automatic arrays or moderate
 	   recursion can cause stack overflow. */
 	ASSERT (is_thread (t));
+	//printf("thread_current() t->status == THREAD_RUNNING: %d\n", t->status == THREAD_RUNNING);
 	ASSERT (t->status == THREAD_RUNNING);
 
 	return t;
@@ -606,23 +607,20 @@ allocate_tid (void) {
 
 /* seogyeong */
 void thread_sleep(int64_t ticks){
-	printf("thread_sleep called\n");
 	enum intr_level old_level = intr_disable ();
 	struct thread *curr = thread_current();
-	printf("curr!=idle_thread: %d\n", curr!=idle_thread);
 	if(curr!=idle_thread){
-		printf("thread_sleep CH01\n");
-		thread_block();
-		printf("thread_sleep CH02\n");
 		list_push_back(&sleep_list, &curr->elem);
-		printf("thread_sleep CH03\n");
 		curr->ticks = ticks;
-		printf("thread_sleep CH04\n");
 		if(next_tick_to_awake > ticks) next_tick_to_awake = ticks;
+		thread_block();
+		
+
 	}
-	printf("thread_sleep CH05\n");
+	
 	intr_set_level (old_level);
-	printf("thread_sleep ended\n");
+
+	
 
 }
 
