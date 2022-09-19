@@ -66,7 +66,9 @@ sema_down (struct semaphore *sema) {
 
 	old_level = intr_disable ();
 	while (sema->value == 0) {
-		list_push_back (&sema->waiters, &thread_current ()->elem);
+		/* Added (Project 1)
+			insert waiters list by priority order */
+		list_insert_ordered (&sema->waiters, &thread_current ()->elem, &cmp_priority, NULL);
 		thread_block ();
 	}
 	sema->value--;
@@ -110,9 +112,15 @@ sema_up (struct semaphore *sema) {
 
 	old_level = intr_disable ();
 	if (!list_empty (&sema->waiters))
+		/* Added (Project 1) 
+			sort waiters list (in case priority of thread changed) */
+			list_sort((&sema->waiters), cmp_priority, NULL);
 		thread_unblock (list_entry (list_pop_front (&sema->waiters),
 					struct thread, elem));
 	sema->value++;
+	/* Added (Project 1)
+		priority preemption code (thread.c) */
+	priority_preemption();
 	intr_set_level (old_level);
 }
 
@@ -282,6 +290,9 @@ cond_wait (struct condition *cond, struct lock *lock) {
 	ASSERT (lock_held_by_current_thread (lock));
 
 	sema_init (&waiter.semaphore, 0);
+	/* modified (Project 1) 
+		insert with priority order */
+	list_insert_ordered(&cond->waiters, &waiter.elem, &cmp_sem_priority, NULL);
 	list_push_back (&cond->waiters, &waiter.elem);
 	lock_release (lock);
 	sema_down (&waiter.semaphore);
@@ -303,6 +314,9 @@ cond_signal (struct condition *cond, struct lock *lock UNUSED) {
 	ASSERT (lock_held_by_current_thread (lock));
 
 	if (!list_empty (&cond->waiters))
+		/* Added (Project 1) 
+			sort waiters list of condition variable by priority order */
+		list_sort(&cond->waiters, &cmp_sem_priority, NULL);
 		sema_up (&list_entry (list_pop_front (&cond->waiters),
 					struct semaphore_elem, elem)->semaphore);
 }
@@ -320,4 +334,23 @@ cond_broadcast (struct condition *cond, struct lock *lock) {
 
 	while (!list_empty (&cond->waiters))
 		cond_signal (cond, lock);
+}
+
+/* Added (Project 1)
+	input: list_elem *a, list_elem *b
+	output: if priority of a > b, 1.
+			otherwise, return 0.		 */
+bool cmp_sem_priority (const struct list_elem *a, const struct list_elem *b, void *aux UNUSED){
+	// struct semaphore_elem
+	struct semaphore_elem *sa = list_entry(a, struct semaphore_elem, elem);
+	struct semaphore_elem *sb = list_entry(b, struct semaphore_elem, elem);
+	
+	/* sort semaphore list which waits condition variable by priority order */
+	struct thread *ta = list_entry( &(sa->elem), struct thread, elem );
+	struct thread *tb = list_entry( &(sb->elem), struct thread, elem );
+
+	// return 1 if priority of a > priority of b
+	// otherwise, return 0
+	if ((ta -> priority) > (tb -> priority)) return 1;
+	else return 0;
 }

@@ -157,4 +157,7 @@ int64_t get_next_tick_awake(void);			/* Return next_tick_to_awake */
 void test_max_priority (void);	/*schedule after comparing current thread and highest priority thread*/
 bool cmp_priority (const struct list_elem *a, const struct list_elem *b, void *aux UNUSED); /* Compare priority */
 
+/* Added(Project 1) */
+void priority_preemption(void);
+
 #endif /* threads/thread.h */

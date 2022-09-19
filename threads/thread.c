@@ -219,7 +219,8 @@ thread_create (const char *name, int priority,
 
 	/* Added(project 1) */
 	//If this thread's priority is higher than current running threads's priority, reschedule
-	test_max_priority();		
+	priority_preemption();
+	// test_max_priority();		
 
 	return tid;
 }
@@ -328,7 +329,9 @@ thread_yield (void) {
 		/* Added(project 1) */
 		// Threads should be inserted in order
 		list_insert_ordered (&ready_list, &curr->elem, cmp_priority, NULL);
-	do_schedule (THREAD_READY);
+	curr -> status = THREAD_READY;
+	// do_schedule (THREAD_READY); /// right??
+	schedule();
 	intr_set_level (old_level);
 }
 
@@ -337,11 +340,12 @@ void
 thread_set_priority (int new_priority) {
 	/* Added(project 1) */
 	// If current thread's priority changed, we should schedule again
-	if( thread_current ()->priority != new_priority ){
-		thread_current ()->priority = new_priority;
-		test_max_priority();
-	}
-	
+	// if( thread_current ()->priority != new_priority ){
+	// 	thread_current ()->priority = new_priority;
+	// 	test_max_priority();
+	// }
+	thread_current ()->priority = new_priority;
+	priority_preemption();
 
 }
 
@@ -702,4 +706,15 @@ bool cmp_priority (const struct list_elem *a, const struct list_elem *b, void *a
 	else return 0;
 }
 
+/* Added (Project 1) 
+	priority preemption code */
+
+void priority_preemption(void) {
+	struct thread *cur = thread_current();
+	struct thread *front = list_entry(list_front(&ready_list), struct thread, elem);
+	
+	if(!list_empty(&ready_list) && cur->priority < front->priority){
+		thread_yield();
+	}
+}
 
