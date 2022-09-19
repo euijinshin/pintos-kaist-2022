@@ -193,11 +193,32 @@ lock_init (struct lock *lock) {
    we need to sleep. */
 void
 lock_acquire (struct lock *lock) {
+	if (thread_mlfqs) {
+		sema_down (&lock->semaphore);
+		lock->holder = thread_current ();
+		return ;
+	}
+
 	ASSERT (lock != NULL);
 	ASSERT (!intr_context ());
 	ASSERT (!lock_held_by_current_thread (lock));
 
+	/* Added(Project 1)
+		if lock exists, 
+		1) save address of lock
+		2) remember latest priority - thread list (multiple donation)
+		3) donate_priority() */
+	struct thread *curr = thread_current ();
+	if (lock->holder) {
+		curr->wait_on_lock = lock;
+		list_insert_ordered (&lock->holder->donations, &curr->donation_elem, 
+									cmp_don_priority, NULL);
+		donate_priority ();
+	}	
+
 	sema_down (&lock->semaphore);
+	/* Added(Project 1) - renew lock holder after getting lock */
+	curr -> wait_on_lock = NULL;
 	lock->holder = thread_current ();
 }
 
@@ -230,6 +251,16 @@ void
 lock_release (struct lock *lock) {
 	ASSERT (lock != NULL);
 	ASSERT (lock_held_by_current_thread (lock));
+
+	/* Added(Project 1). mlfqs */
+	if (thread_mlfqs) {
+		sema_up (&lock->semaphore);
+		return ;
+  	}
+
+	/* Added(Project 1) */
+	remove_with_lock(lock);
+	refresh_priority();
 
 	lock->holder = NULL;
 	sema_up (&lock->semaphore);
@@ -293,7 +324,7 @@ cond_wait (struct condition *cond, struct lock *lock) {
 	sema_init (&waiter.semaphore, 0);
 	/* modified (Project 1) 
 		insert with priority order */
-	list_insert_ordered(&cond->waiters, &waiter.elem, &cmp_sem_priority, NULL);
+	list_insert_ordered(&cond->waiters, &waiter.elem, cmp_sem_priority, NULL);
 	list_push_back (&cond->waiters, &waiter.elem);
 	lock_release (lock);
 	sema_down (&waiter.semaphore);
@@ -317,7 +348,7 @@ cond_signal (struct condition *cond, struct lock *lock UNUSED) {
 	if (!list_empty (&cond->waiters)) {
 		/* Added (Project 1) 
 			sort waiters list of condition variable by priority order */
-		list_sort(&cond->waiters, &cmp_sem_priority, NULL);
+		list_sort(&cond->waiters, cmp_sem_priority, NULL);
 		sema_up (&list_entry (list_pop_front (&cond->waiters),
 					struct semaphore_elem, elem)->semaphore);
 	}
@@ -351,8 +382,8 @@ bool cmp_sem_priority (const struct list_elem *a, const struct list_elem *b, voi
 	struct list *wait_a = &(sem_a->semaphore.waiters);
 	struct list *wait_b = &(sem_b->semaphore.waiters);
 
-	// // return 1 if priority of a > priority of b
-	// // otherwise, return 0
+	// return 1 if priority of a > priority of b
+	// otherwise, return 0
 	return list_entry (list_begin (wait_a), struct thread, elem)->priority
 		 > list_entry (list_begin (wait_b), struct thread, elem)->priority;
 }

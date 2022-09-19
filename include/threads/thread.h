@@ -99,6 +99,16 @@ struct thread {
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
 
+	/* Added(Project 1). Priority donation code */
+	int init_priority;				/* Priority init after donation */
+	struct lock *wait_on_lock;		/* Save lock address where this thread is waiting */
+	struct list donations;			/* Used to consider multiple donation */
+	struct list_elem donation_elem;	/* Used to consider multiple donation */
+
+	/* Added(Project 1). codes for mlfqs */
+	int nice;
+	int recent_cpu;
+
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
 	uint64_t *pml4;                     /* Page map level 4 */
@@ -156,8 +166,23 @@ int64_t get_next_tick_awake(void);			/* Return next_tick_to_awake */
 /* Added(project 1) */
 void test_max_priority (void);	/*schedule after comparing current thread and highest priority thread*/
 bool cmp_priority (const struct list_elem *a, const struct list_elem *b, void *aux UNUSED); /* Compare priority */
+bool cmp_don_priority (const struct list_elem *a, const struct list_elem *b, void *aux UNUSED); /* Compare priority of donation elem */
 
 /* Added(Project 1) */
 void priority_preemption(void);
+
+/* Added(Project 1) */
+void donate_priority(void);
+void remove_with_lock(struct lock *lock);
+void refresh_priority(void);
+
+/* Added(Project 1) */ 		// for mlfqs
+void mlfqs_priority(struct thread *t);
+void mlfqs_recent_cpu(struct thread *t);
+void mlfqs_load_avg(void);
+void mlfqs_increment(void);
+void mlfqs_recalc(void);
+void mlfqs_recal_priority(void);
+void mlfqs_recal_recent_cpu(void);
 
 #endif /* threads/thread.h */
