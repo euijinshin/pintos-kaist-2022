@@ -28,12 +28,11 @@
    that are ready to run but not actually running. */
 static struct list ready_list;
 
-/*seogyeong*/
-/* List of processes in THREAD_BLOCK state */
-static struct list sleep_list;
+/* Added(project 1) */
+static struct list sleep_list;					/* List of processes in THREAD_BLOCK state */
 
-/*seogyeong*/
-static long long next_tick_to_awake  = INT64_MAX;	/* smallest wakeup_ticks int sleep_list*/
+/* Added(project 1) */
+static long long next_tick_awake  = INT64_MAX;	/* smallest wakeup_ticks int sleep_list*/
 
 
 /* Idle thread. */
@@ -118,8 +117,8 @@ thread_init (void) {
 	list_init (&ready_list);
 	list_init (&destruction_req);
 
-	/* seogyeong */
-	list_init (&sleep_list);
+	/*Added(Project 1)*/
+	list_init (&sleep_list);		/* initialize sleep_list */
 
 	/* Set up a thread structure for the running thread. */
 	initial_thread = running_thread ();
@@ -218,9 +217,9 @@ thread_create (const char *name, int priority,
 	/* Add to run queue. */
 	thread_unblock (t);
 
-	/* seogyeong */
-	test_max_priority();
-	
+	/* Added(project 1) */
+	//If this thread's priority is higher than current running threads's priority, reschedule
+	test_max_priority();		
 
 	return tid;
 }
@@ -260,8 +259,10 @@ thread_unblock (struct thread *t) {
 	old_level = intr_disable ();
 	ASSERT (t->status == THREAD_BLOCKED);
 
-	/* seogyeong */
+	/* Added(project 1) */
+	// The threads need to be inserted in order
 	list_insert_ordered (&ready_list, &t->elem, cmp_priority, NULL);
+
 	t->status = THREAD_READY;
 	intr_set_level (old_level);
 }
@@ -324,6 +325,8 @@ thread_yield (void) {
 
 	old_level = intr_disable ();
 	if (curr != idle_thread)
+		/* Added(project 1) */
+		// Threads should be inserted in order
 		list_insert_ordered (&ready_list, &curr->elem, cmp_priority, NULL);
 	do_schedule (THREAD_READY);
 	intr_set_level (old_level);
@@ -332,6 +335,8 @@ thread_yield (void) {
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void
 thread_set_priority (int new_priority) {
+	/* Added(project 1) */
+	// If current thread's priority changed, we should schedule again
 	if( thread_current ()->priority != new_priority ){
 		thread_current ()->priority = new_priority;
 		test_max_priority();
@@ -621,12 +626,15 @@ void thread_sleep(int64_t ticks){
 	enum intr_level old_level = intr_disable ();
 	struct thread *curr = thread_current();
 	if(curr!=idle_thread){
+		/* Idle thread should run, not blocked */
 		list_push_back(&sleep_list, &curr->elem);
+
+		//update ticks
 		curr->ticks = ticks;
-		if(next_tick_to_awake > ticks) next_tick_to_awake = ticks;
+		if(next_tick_awake > ticks) next_tick_awake = ticks;
+
 		thread_block();
 		
-
 	}
 	
 	intr_set_level (old_level);
@@ -640,12 +648,13 @@ void thread_sleep(int64_t ticks){
 
 void thread_awake(int64_t ticks){
 	if(list_empty(&sleep_list)) return;
-	if(get_next_tick_to_awake() > ticks) return;
+	if(get_next_tick_awake() > ticks) return;
 	struct list_elem *sleep_current = list_begin(&sleep_list);
 
 	while(sleep_current != list_end(&sleep_list)){
       struct thread *current_thread = list_entry( sleep_current, struct thread, elem );
       if((current_thread->ticks) <= ticks) {
+		//This thread should be awake
 
          //remove from sleep queue(sleep_list)=
          sleep_current = list_remove(sleep_current);
@@ -656,24 +665,26 @@ void thread_awake(int64_t ticks){
       else {
 		
 		sleep_current = sleep_current -> next;
-		
-		update_next_tick_to_awake(current_thread->ticks);
+		update_next_tick_awake(current_thread->ticks);
       }
       
    }
 }
 
-void update_next_tick_to_awake(int64_t ticks){
-	if (next_tick_to_awake > ticks){
-		next_tick_to_awake = ticks;
+/* Update next_tick_to_awake after waking threads up */
+void update_next_tick_awake(int64_t ticks){
+	if (next_tick_awake > ticks){
+		next_tick_awake = ticks;
 	}
 }
 
-int64_t get_next_tick_to_awake(void){
-	return next_tick_to_awake;
+/* Return next_tick_to_awake */
+int64_t get_next_tick_awake(void){
+	return next_tick_awake;
 }
 
 
+/*schedule after comparing current thread and highest priority thread*/
 void test_max_priority (void){
 	if(!list_empty(&ready_list)){
 		if((thread_current()->priority) < ((list_entry (list_front (&ready_list), struct thread, elem))->priority)){
@@ -682,6 +693,8 @@ void test_max_priority (void){
 	}
 }
 
+
+/* Compare priority. If a > b, return true. Else, false */
 bool cmp_priority (const struct list_elem *a, const struct list_elem *b, void *aux UNUSED){
 	struct thread *a_thread = list_entry( a, struct thread, elem );
 	struct thread *b_thread = list_entry( b, struct thread, elem );

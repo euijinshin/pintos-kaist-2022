@@ -92,7 +92,8 @@ struct thread {
 	char name[16];                      /* Name (for debugging purposes). */
 	int priority;                       /* Priority. */
 
-	/* seogyeong */
+	/* Added(project 1). When this thread is sleeping,
+	the ticks when this thread needs to be awake is stored*/
 	int64_t ticks;
 
 	/* Shared between thread.c and synch.c. */
@@ -146,13 +147,14 @@ int thread_get_load_avg (void);
 
 void do_iret (struct intr_frame *tf);
 
-/* seogyeong */
-void thread_sleep(int64_t ticks); 
-void thread_awake(int64_t ticks); 
-void update_next_tick_to_awake(int64_t ticks);
-int64_t get_next_tick_to_awake(void);
+/* Added(project 1) */
+void thread_sleep(int64_t ticks); 				/* Sleeps running thread */
+void thread_awake(int64_t ticks); 				/* Wake up threads from sleep_list */
+void update_next_tick_awake(int64_t ticks);	/* Update next_tick_to_awake after waking threads up */
+int64_t get_next_tick_awake(void);			/* Return next_tick_to_awake */
 
-void test_max_priority (void);	/*schedule after comparting current thread and highest priority thread*/
+/* Added(project 1) */
+void test_max_priority (void);	/*schedule after comparing current thread and highest priority thread*/
 bool cmp_priority (const struct list_elem *a, const struct list_elem *b, void *aux UNUSED); /* Compare priority */
 
 #endif /* threads/thread.h */

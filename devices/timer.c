@@ -93,8 +93,8 @@ timer_sleep (int64_t ticks) {
 	int64_t start = timer_ticks ();
 
 	ASSERT (intr_get_level () == INTR_ON);
-	//while (timer_elapsed (start) < ticks)
-	//	thread_yield ();
+	
+	/* Added(project1) Use sleep_list to sleep threads instead of while loop(busy waiting) */
 	thread_sleep(start + ticks);
 }
 
@@ -127,6 +127,8 @@ static void
 timer_interrupt (struct intr_frame *args UNUSED) {
 	ticks++;
 	thread_tick ();
+
+	/* Added(project 1). Checks if there is a thread which should be awake. */
 	thread_awake(ticks);
 }
 
