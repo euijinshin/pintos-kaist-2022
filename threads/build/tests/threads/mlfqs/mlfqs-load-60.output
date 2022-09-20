@@ -4,7 +4,7 @@ Kernel command line: -q -mlfqs run mlfqs-load-60
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  157,081,600 loops/s.
+Calibrating timer...  117,760,000 loops/s.
 Boot complete.
 Executing 'mlfqs-load-60':
 (mlfqs-load-60) begin
@@ -45,45 +45,3 @@ Executing 'mlfqs-load-60':
 (mlfqs-load-60) After 64 seconds, load average=35.57.
 (mlfqs-load-60) After 66 seconds, load average=34.39.
 (mlfqs-load-60) After 68 seconds, load average=33.25.
-(mlfqs-load-60) After 70 seconds, load average=32.14.
-(mlfqs-load-60) After 72 seconds, load average=31.08.
-(mlfqs-load-60) After 74 seconds, load average=30.05.
-(mlfqs-load-60) After 76 seconds, load average=29.05.
-(mlfqs-load-60) After 78 seconds, load average=28.09.
-(mlfqs-load-60) After 80 seconds, load average=27.15.
-(mlfqs-load-60) After 82 seconds, load average=26.25.
-(mlfqs-load-60) After 84 seconds, load average=25.38.
-(mlfqs-load-60) After 86 seconds, load average=24.54.
-(mlfqs-load-60) After 88 seconds, load average=23.73.
-(mlfqs-load-60) After 90 seconds, load average=22.94.
-(mlfqs-load-60) After 92 seconds, load average=22.18.
-(mlfqs-load-60) After 94 seconds, load average=21.44.
-(mlfqs-load-60) After 96 seconds, load average=20.73.
-(mlfqs-load-60) After 98 seconds, load average=20.04.
-(mlfqs-load-60) After 100 seconds, load average=19.38.
-(mlfqs-load-60) After 102 seconds, load average=18.74.
-(mlfqs-load-60) After 104 seconds, load average=18.11.
-(mlfqs-load-60) After 106 seconds, load average=17.51.
-(mlfqs-load-60) After 108 seconds, load average=16.93.
-(mlfqs-load-60) After 110 seconds, load average=16.37.
-(mlfqs-load-60) After 112 seconds, load average=15.83.
-(mlfqs-load-60) After 114 seconds, load average=15.30.
-(mlfqs-load-60) After 116 seconds, load average=14.80.
-(mlfqs-load-60) After 118 seconds, load average=14.30.
-(mlfqs-load-60) After 120 seconds, load average=13.83.
-Interrupt 0x0d (#GP General Protection Exception) at rip=800420815b
- cr2=0000000000000000 error=               0
-rax cccccccccccccc94 rbx 0000000000000000 rcx 0000000000000000 rdx 00000000fffe99db
-rsp 0000008004234e60 rbp 0000008004234e70 rsi 00000000666666a7 rdi cccccccccccccc94
-rip 000000800420815b r8 0000000000000000  r9 0000000000000000 r10 0000000000000000
-r11 0000000000000000 r12 0000000000000000 r13 0000000000000000 r14 0000000000000000
-r15 0000000000000000 rflags 00000082
-es: 0010 ds: 0010 cs: 0008 ss: 0010
-Kernel PANIC at ../../threads/interrupt.c:361 in intr_handler(): Unexpected interrupt
-Call stack: 0x800421416e 0x800420946e 0x8004209820 0x8004208478 0x800420deb2 0x8004209402 0x8004209820 0x80042074ef.
-The `backtrace' program can make call stacks useful.
-Read "Backtraces" in the "Debugging Tools" chapter
-of the Pintos documentation for more information.
-Timer: 13044 ticks
-Thread: 7000 idle ticks, 6044 kernel ticks, 0 user ticks
-Console: 4

@@ -37,6 +37,7 @@ static struct list ready_list;
 
 /* Added(project 1) */
 static struct list sleep_list;					/* List of processes in THREAD_BLOCK state */
+static struct list all_list;					/* List of processes in THREAD_BLOCK state */
 
 /* Added(project 1) */
 static long long next_tick_awake  = INT64_MAX;	/* smallest wakeup_ticks int sleep_list*/
@@ -129,6 +130,7 @@ thread_init (void) {
 
 	/*Added(Project 1)*/
 	list_init (&sleep_list);		/* initialize sleep_list */
+	list_init(&all_list);
 
 	/* Set up a thread structure for the running thread. */
 	initial_thread = running_thread ();
@@ -229,6 +231,7 @@ thread_create (const char *name, int priority,
 
 	/* Add to run queue. */
 	thread_unblock (t);
+	list_push_back(&all_list, &t->allelem);
 
 	/* Added(project 1) */
 	//If this thread's priority is higher than current running threads's priority, reschedule
@@ -854,32 +857,22 @@ void mlfqs_increment (void) {
 	thread_current()->recent_cpu = add_mixed(thread_current()->recent_cpu, 1);
 }
 
-void mlfqs_recalc (void) {
-	// all_list?
-	mlfqs_recal_priority();
-	mlfqs_recal_recent_cpu();
-}
+// void mlfqs_recalc (void) {
+// 	// all_list?
+// 	mlfqs_recal_priority();
+// 	mlfqs_recal_recent_cpu();
+// }
 
 void mlfqs_recal_priority(void) {
-	for (struct list_elem *e = list_begin(&ready_list); e != list_end (&ready_list); e = list_next (e)) {
-		struct thread *t = list_entry (e, struct thread, elem);
-		mlfqs_priority(t);
-	}
-
-	for (struct list_elem *e = list_begin(&sleep_list); e != list_end (&sleep_list); e = list_next (e)) {
-		struct thread *t = list_entry (e, struct thread, elem);
+	for (struct list_elem *e = list_begin(&all_list); e != list_end (&all_list); e = list_next (e)) {
+		struct thread *t = list_entry (e, struct thread, allelem);
 		mlfqs_priority(t);
 	}
 }
 
 void mlfqs_recal_recent_cpu(void) {
-	for (struct list_elem *e = list_begin(&ready_list); e != list_end (&ready_list); e = list_next (e)) {
-		struct thread *t = list_entry (e, struct thread, elem);
-		mlfqs_priority(t);
-	}
-
-	for (struct list_elem *e = list_begin(&sleep_list); e != list_end (&sleep_list); e = list_next (e)) {
-		struct thread *t = list_entry (e, struct thread, elem);
-		mlfqs_priority(t);
+	for (struct list_elem *e = list_begin(&all_list); e != list_end (&all_list); e = list_next (e)) {
+		struct thread *t = list_entry (e, struct thread, allelem);
+		mlfqs_recent_cpu(t);
 	}
 }
