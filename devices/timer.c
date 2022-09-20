@@ -131,7 +131,7 @@ timer_interrupt (struct intr_frame *args UNUSED) {
 	if (thread_mlfqs) {
 		mlfqs_increment(); //increment recent_cpu
 		if (ticks % 4 == 0) { // every 4 ticks
-			mlfqs_recal_priority;
+			mlfqs_recal_priority();
 			if (ticks % TIMER_FREQ == 0) { // every seconds
 				mlfqs_recal_recent_cpu(); // calculate recent cpu
 				mlfqs_load_avg (); // and load_avg

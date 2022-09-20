@@ -41,6 +41,9 @@ static struct list sleep_list;					/* List of processes in THREAD_BLOCK state */
 /* Added(project 1) */
 static long long next_tick_awake  = INT64_MAX;	/* smallest wakeup_ticks int sleep_list*/
 
+/* Added(Project 1) */
+static struct list all_list;					/* List of every thread */
+
 
 /* Idle thread. */
 static struct thread *idle_thread;
@@ -129,6 +132,7 @@ thread_init (void) {
 
 	/*Added(Project 1)*/
 	list_init (&sleep_list);		/* initialize sleep_list */
+	list_init (&all_list);			/* initialize all_list */
 
 	/* Set up a thread structure for the running thread. */
 	initial_thread = running_thread ();
@@ -375,7 +379,7 @@ thread_get_priority (void) {
 
 /* Sets the current thread's nice value to NICE. */
 void
-thread_set_nice (int nice UNUSED) {
+thread_set_nice (int nice) {
 	/* TODO: Your implementation goes here */	
 	enum intr_level old_level;
 	old_level = intr_disable(); // interrupt diable
@@ -486,6 +490,7 @@ kernel_thread (thread_func *function, void *aux) {
    NAME. */
 static void
 init_thread (struct thread *t, const char *name, int priority) {
+	enum intr_level old_level;
 	ASSERT (t != NULL);
 	ASSERT (PRI_MIN <= priority && priority <= PRI_MAX);
 	ASSERT (name != NULL);
@@ -496,6 +501,10 @@ init_thread (struct thread *t, const char *name, int priority) {
 	t->tf.rsp = (uint64_t) t + PGSIZE - sizeof (void *);
 	t->priority = priority;
 	t->magic = THREAD_MAGIC;
+
+	old_level = intr_disable ();
+	list_push_back (&all_list, &t->allelem);
+	intr_set_level (old_level);
 
 	/* Added(Project 1). priority donation initiallize */
 	t->init_priority = priority;
@@ -854,32 +863,18 @@ void mlfqs_increment (void) {
 	thread_current()->recent_cpu = add_mixed(thread_current()->recent_cpu, 1);
 }
 
-void mlfqs_recalc (void) {
-	// all_list?
-	mlfqs_recal_priority();
-	mlfqs_recal_recent_cpu();
-}
-
 void mlfqs_recal_priority(void) {
-	for (struct list_elem *e = list_begin(&ready_list); e != list_end (&ready_list); e = list_next (e)) {
-		struct thread *t = list_entry (e, struct thread, elem);
-		mlfqs_priority(t);
-	}
 
-	for (struct list_elem *e = list_begin(&sleep_list); e != list_end (&sleep_list); e = list_next (e)) {
-		struct thread *t = list_entry (e, struct thread, elem);
+	for (struct list_elem *e = list_begin(&all_list); e != list_end (&all_list); e = list_next (e)) {
+		struct thread *t = list_entry (e, struct thread, allelem);
 		mlfqs_priority(t);
 	}
 }
 
 void mlfqs_recal_recent_cpu(void) {
-	for (struct list_elem *e = list_begin(&ready_list); e != list_end (&ready_list); e = list_next (e)) {
-		struct thread *t = list_entry (e, struct thread, elem);
-		mlfqs_priority(t);
-	}
 
-	for (struct list_elem *e = list_begin(&sleep_list); e != list_end (&sleep_list); e = list_next (e)) {
-		struct thread *t = list_entry (e, struct thread, elem);
-		mlfqs_priority(t);
+	for (struct list_elem *e = list_begin(&all_list); e != list_end (&all_list); e = list_next (e)) {
+		struct thread *t = list_entry (e, struct thread, allelem);
+		mlfqs_recent_cpu(t);
 	}
 }

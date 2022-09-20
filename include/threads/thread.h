@@ -98,6 +98,7 @@ struct thread {
 
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
+	struct list_elem allelem;
 
 	/* Added(Project 1). Priority donation code */
 	int init_priority;				/* Priority init after donation */
