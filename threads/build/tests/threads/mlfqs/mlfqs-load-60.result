@@ -1,6 +1,6 @@
 FAIL
 Kernel panic in run: PANIC at ../../threads/interrupt.c:361 in intr_handler(): Unexpected interrupt
-Call stack: 0x800421416e 0x800420946e 0x8004209820 0x8004208478 0x800420deb2 0x8004209402 0x8004209820 0x8004208582 0x8004207cc3 0x800420dd91 0x800421abd6 0x80042074ef
+Call stack: 0x800421416e 0x800420946e 0x8004209820 0x8004208478 0x800420deb2 0x8004209402 0x8004209820 0x80042074ef
 Translation of call stack:
 0x000000800421416e: debug_panic (lib/kernel/debug.c:32)
 0x000000800420946e: intr_handler (threads/interrupt.c:365)
@@ -9,8 +9,4 @@ Translation of call stack:
 0x000000800420deb2: timer_interrupt (devices/timer.c:135)
 0x0000008004209402: intr_handler (threads/interrupt.c:352)
 0x0000008004209820: intr_entry (threads/intr-stubs.o:?)
-0x0000008004208582: intr_set_level (threads/interrupt.c:131 (discriminator 1))
-0x0000008004207cc3: thread_sleep (threads/thread.c:716)
-0x000000800420dd91: timer_sleep (devices/timer.c:99)
-0x000000800421abd6: load_thread (tests/threads/mlfqs/mlfqs-load-60.c:155)
 0x00000080042074ef: kernel_thread (threads/thread.c:485)
