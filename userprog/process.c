@@ -180,9 +180,13 @@ process_exec (void *f_name) {
 	success = load (file_name, &_if);
 
 	/* If load failed, quit. */
-	palloc_free_page (file_name);
-	if (!success)
+	
+	if (!success) {
+		palloc_free_page (file_name);
 		return -1;
+	}
+		
+	hex_dump(_if.rsp, _if.rsp, KERN_BASE - _if.rsp, true);
 
 	/* Start switched process. */
 	do_iret (&_if);
@@ -328,6 +332,22 @@ load (const char *file_name, struct intr_frame *if_) {
 	off_t file_ofs;
 	bool success = false;
 	int i;
+	
+
+	/* Modified for project 2 */
+	char **ptr_place = (char **)calloc(sizeof(char *), 128);
+	for(int i=0; i<128; i++){
+		*ptr_place = (char *) calloc( sizeof(char ), 50); //size 고려
+	}
+	char **ptr = ptr_place ;
+	int divided_count = 0;
+
+   char *token;
+
+	for (token = strtok_r (file_name, " ", ptr ); token != NULL; token = strtok_r (NULL, " ", ptr )) 
+		divided_count ++;
+	
+
 
 	/* Allocate and activate page directory. */
 	t->pml4 = pml4_create ();
@@ -336,9 +356,10 @@ load (const char *file_name, struct intr_frame *if_) {
 	process_activate (thread_current ());
 
 	/* Open executable file. */
-	file = filesys_open (file_name);
+	/* Modified for project 2 */
+	file = filesys_open (ptr_place[0]);
 	if (file == NULL) {
-		printf ("load: %s: open failed\n", file_name);
+		printf ("load: %s: open failed\n", ptr_place[0]);
 		goto done;
 	}
 
@@ -416,6 +437,29 @@ load (const char *file_name, struct intr_frame *if_) {
 
 	/* TODO: Your code goes here.
 	 * TODO: Implement argument passing (see project2/argument_passing.html). */
+		/* Added from project 2 */
+		if_->rsp = if_->rsp - sizeof(int);
+		*(int *)(if_->rsp) = divided_count;
+		if_->rsp = if_->rsp - sizeof(char **);
+		*(char ***)(if_->rsp) = &file_name;
+		
+		//pushing argument address into stack
+		for(i = divided_count - 1 ; i > -1 ; i--)
+		{
+			if_->rsp = if_->rsp - sizeof(char *);
+			**(char ***)(if_->rsp) = ptr_place[i];
+		}
+		
+		// pushing argument into stack
+		// 근데 argv, argc도 stack되어야 함
+		for(int i = divided_count - 1 ; i > -1 ; i--)
+		{
+			for(int j = strlen(ptr_place[i]) ; j > -1 ; j--)
+				{
+				if_->rsp = if_->rsp - 1;
+				*(char **)(if_->rsp) = ptr_place[i][j];
+				}
+		}
 
 	success = true;
 

@@ -37,10 +37,29 @@ syscall_init (void) {
 			FLAG_IF | FLAG_TF | FLAG_DF | FLAG_IOPL | FLAG_AC | FLAG_NT);
 }
 
+void check_address(void *addr)
+{
+	/* check if pointer points user memory */
+	/* if not, quit process */
+	if (0x8048000 > addr || 0xc0000000 < addr) exit(-1);
+}
+
 /* The main system call interface */
 void
 syscall_handler (struct intr_frame *f UNUSED) {
 	// TODO: Your implementation goes here.
 	printf ("system call!\n");
 	thread_exit ();
+}
+
+void get_argument(void *esp, int *arg, int count)
+{
+	/* 유저 스택에 저장된 인자 값들을 커널로 저장 */
+	/* 인자가 저장된 위치가 유저 영역인지 확인 */
+	void *track = esp;
+	for(int i=0; i<count; i++){
+		check_address((int *)track);
+		arg[i] = *(int *)track;
+		track = track + sizeof(int);
+	}
 }
