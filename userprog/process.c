@@ -209,36 +209,7 @@ process_exec (void *f_name) {
     /* We first kill the current context */
     process_cleanup ();
 
-    // for argument parsing
-    char *argv[64];     // 인자 배열
-    int argc = 0;       // 인자 개수
 
-    char *token;        // 실제 리턴 받을 토큰
-    char *save_ptr;     // 토큰 분리 후 문자열 중 남는 부분
-    token = strtok_r(file_name, " ", &save_ptr);
-    while (token != NULL) {
-        argv[argc] = token;
-        token = strtok_r(NULL, " ", &save_ptr);
-        argc++;
-    }
-
-    /* And then load the binary */
-    success = load (file_name, &_if);
-
-    
-
-    /* If load failed, quit. */
-    
-    if (!success){
-        palloc_free_page (file_name);
-        return -1;
-    }
-
-    // 유저스택에 인자 넣기
-    void **rspp = &_if.rsp;
-    argument_stack(argv, argc, rspp);
-    _if.R.rdi = argc;
-    _if.R.rsi = (uint64_t)*rspp + sizeof(void *);
     
 
     /* Start switched process. */
