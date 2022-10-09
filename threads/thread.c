@@ -205,6 +205,8 @@ tid_t
 thread_create (const char *name, int priority,
 		thread_func *function, void *aux) {
 	struct thread *t;
+	// struct kernel_thread_frame *kf;
+	
 	tid_t tid;
 
 	ASSERT (function != NULL);
@@ -217,6 +219,7 @@ thread_create (const char *name, int priority,
 	/* Initialize thread. */
 	init_thread (t, name, priority);
 	tid = t->tid = allocate_tid ();
+	// kf = alloc_frame(t, sizeof *kf);
 
 	/* Call the kernel_thread if it scheduled.
 	 * Note) rdi is 1st argument, and rsi is 2nd argument. */
@@ -231,7 +234,6 @@ thread_create (const char *name, int priority,
 
 	/* Add to run queue. */
 	thread_unblock (t);
-	list_push_back(&all_list, &t->allelem);
 
 	/* Added(project 1) */
 	//If this thread's priority is higher than current running threads's priority, reschedule
@@ -327,8 +329,10 @@ thread_exit (void) {
 	/* Just set our status to dying and schedule another process.
 	   We will be destroyed during the call to schedule_tail(). */
 	intr_disable ();
+	list_remove(&thread_current()->allelem);
 	do_schedule (THREAD_DYING);
-	NOT_REACHED ();
+	schedule();
+	// NOT_REACHED ();
 }
 
 /* Yields the CPU.  The current thread is not put to sleep and
@@ -499,6 +503,8 @@ init_thread (struct thread *t, const char *name, int priority) {
 	t->tf.rsp = (uint64_t) t + PGSIZE - sizeof (void *);
 	t->priority = priority;
 	t->magic = THREAD_MAGIC;
+	list_push_back(&all_list, &t->allelem);
+
 
 	/* Added(Project 1). priority donation initiallize */
 	t->init_priority = priority;

@@ -48,6 +48,85 @@ void check_address(void *addr)
 void
 syscall_handler (struct intr_frame *f UNUSED) {
 	// TODO: Your implementation goes here.
+	uint32_t *sp = f -> rsp; /* user stack pointer */
+	check_address((void *)sp);
+	int syscall_num = *sp; /* system call number */
+	int *arg = malloc(100 * sizeof(int));
+
+	switch (syscall_num)
+	{
+		case SYS_HALT :
+			halt();
+			break;
+		case SYS_EXIT :
+			get_argument(sp, arg, 1);
+			check_address((void *)arg[0]);
+			f -> R.rax = exec((int)arg[0]);
+			break;
+		case SYS_FORK :
+			get_argument(sp, arg, 1);
+			check_address((void *)arg[0]);
+			f -> R.rax = exec((const char *)arg[0]);
+			break;
+		case SYS_EXEC :
+			get_argument(sp, arg, 1);
+			check_address((void *)arg[0]);
+			f -> R.rax = exec((const char *)arg[0]);
+			break;
+		case SYS_WAIT : 
+			get_argument(sp, arg, 1);
+			check_address((void *)arg[0]);
+			f -> R.rax = exec((tid_t)arg[0]);
+			break;
+		case SYS_CREATE :
+			get_argument(sp, arg, 1);
+			check_address((void *)arg[0]);
+			f -> R.rax = exec((int)arg[0]);
+		case SYS_REMOVE :
+			get_argument(sp, arg, 1);
+			check_address((void *)arg[0]);
+			f -> R.rax = exec((int)arg[0]);
+		case SYS_OPEN : 
+			get_argument(sp, arg, 1);
+			check_address((void *)arg[0]);
+			f -> R.rax = open((const char *)arg[0]);
+			break;
+		case SYS_FILESIZE : 
+			get_argument(sp, arg, 1);
+			check_address((void *)arg[0]);
+			f -> R.rax = filesize ((int)arg[0]);
+			break;	
+		case SYS_READ : 
+			get_argument(sp, arg, 3);
+			check_address((void *)arg[0]);
+			f -> R.rax = read ((int)arg[0], (void *)arg[1], (unsigned )arg[2]);
+			break;	
+		case SYS_WRITE : 
+			get_argument(sp, arg, 3);
+			check_address((void *)arg[0]);
+			f -> R.rax = write ((int)arg[0], (const void *)arg[1], (unsigned )arg[2]);
+			break;	
+		case SYS_SEEK :  
+			get_argument(sp, arg, 2);
+			check_address((void *)arg[0]);
+			f -> R.rax = seek  ((int)arg[0], (unsigned )arg[1]);
+			break;	
+		case SYS_TELL :  
+			get_argument(sp, arg, 1);
+			check_address((void *)arg[0]);
+			f -> R.rax = tell  ((int)arg[0]);
+			break;	
+		case SYS_CLOSE :
+			get_argument(sp, arg, 1);
+			check_address((void *)arg[0]);
+			f -> R.rax = close   ((int)arg[0]);
+			break;
+		default :
+			get_argument(sp, arg, 1);
+			check_address((void *)arg[0]);
+			f -> R.rax = exec((int)arg[0]);
+			break;
+	}
 	printf ("system call!\n");
 	thread_exit ();
 }

@@ -1,1 +1,14 @@
-PASS
+FAIL
+Kernel panic in run: PANIC at ../../lib/kernel/console.c:173 in putchar_have_lock(): assertion `console_locked_by_current_thread ()' failed.
+Call stack: 0x8004214150 0x80042174d4 0x8004217475 0x800421169c 0x8004235000 0x8004211653 0x800420de25 0x800420681b 0x80042067dd 0x800420613d
+Translation of call stack:
+0x0000008004214150: debug_panic (lib/kernel/debug.c:32)
+0x00000080042174d4: putchar_have_lock (lib/kernel/console.c:174)
+0x0000008004217475: vprintf_helper (lib/kernel/console.c:166)
+0x000000800421169c: __vprintf (lib/stdio.c:154)
+0x0000008004235000: (unknown)
+0x0000008004211653: printf (lib/stdio.c:80)
+0x000000800420de25: timer_print_stats (devices/timer.c:123)
+0x000000800420681b: print_stats (threads/init.c:356)
+0x00000080042067dd: power_off (threads/init.c:347)
+0x000000800420613d: main (threads/init.c:127)
