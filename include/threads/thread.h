@@ -12,10 +12,10 @@
 
 /* States in a thread's life cycle. */
 enum thread_status {
-	THREAD_RUNNING,     /* Running thread. */
-	THREAD_READY,       /* Not running but ready to run. */
-	THREAD_BLOCKED,     /* Waiting for an event to trigger. */
-	THREAD_DYING        /* About to be destroyed. */
+    THREAD_RUNNING,     /* Running thread. */
+    THREAD_READY,       /* Not running but ready to run. */
+    THREAD_BLOCKED,     /* Waiting for an event to trigger. */
+    THREAD_DYING        /* About to be destroyed. */
 };
 
 /* Thread identifier type.
@@ -27,6 +27,10 @@ typedef int tid_t;
 #define PRI_MIN 0                       /* Lowest priority. */
 #define PRI_DEFAULT 31                  /* Default priority. */
 #define PRI_MAX 63                      /* Highest priority. */
+
+// for system call
+#define FDT_PAGES 3                       // pages to allocate for file descriptor tables (thread_create, process_exit)
+#define FDCOUNT_LIMIT FDT_PAGES *(1 << 9) // Limit fdIdx
 
 /* A kernel thread or user process.
  *
@@ -86,42 +90,47 @@ typedef int tid_t;
  * ready state is on the run queue, whereas only a thread in the
  * blocked state is on a semaphore wait list. */
 struct thread {
-	/* Owned by thread.c. */
-	tid_t tid;                          /* Thread identifier. */
-	enum thread_status status;          /* Thread state. */
-	char name[16];                      /* Name (for debugging purposes). */
-	int priority;                       /* Priority. */
+    /* Owned by thread.c. */
+    tid_t tid;                          /* Thread identifier. */
+    enum thread_status status;          /* Thread state. */
+    char name[16];                      /* Name (for debugging purposes). */
+    int priority;                       /* Priority. */
 
-	/* Added(project 1). When this thread is sleeping,
-	the ticks when this thread needs to be awake is stored*/
-	int64_t ticks;
+    /* Added(project 1). When this thread is sleeping,
+    the ticks when this thread needs to be awake is stored*/
+    int64_t ticks;
 
-	/* Shared between thread.c and synch.c. */
-	struct list_elem elem;              /* List element. */
-	struct list_elem allelem;
+    /* Shared between thread.c and synch.c. */
+    struct list_elem elem;              /* List element. */
+    struct list_elem allelem;
 
-	/* Added(Project 1). Priority donation code */
-	int init_priority;				/* Priority init after donation */
-	struct lock *wait_on_lock;		/* Save lock address where this thread is waiting */
-	struct list donations;			/* Used to consider multiple donation */
-	struct list_elem donation_elem;	/* Used to consider multiple donation */
+    /* Added(Project 1). Priority donation code */
+    int init_priority;              /* Priority init after donation */
+    struct lock *wait_on_lock;      /* Save lock address where this thread is waiting */
+    struct list donations;          /* Used to consider multiple donation */
+    struct list_elem donation_elem; /* Used to consider multiple donation */
 
-	/* Added(Project 1). codes for mlfqs */
-	int nice;
-	int recent_cpu;
+    /* Added(Project 1). codes for mlfqs */
+    int nice;
+    int recent_cpu;
+
 
 #ifdef USERPROG
-	/* Owned by userprog/process.c. */
-	uint64_t *pml4;                     /* Page map level 4 */
+    /* Owned by userprog/process.c. */
+    uint64_t *pml4;                     /* Page map level 4 */
 #endif
 #ifdef VM
-	/* Table for whole virtual memory owned by thread. */
-	struct supplemental_page_table spt;
+    /* Table for whole virtual memory owned by thread. */
+    struct supplemental_page_table spt;
 #endif
 
-	/* Owned by thread.c. */
-	struct intr_frame tf;               /* Information for switching */
-	unsigned magic;                     /* Detects stack overflow. */
+    /* Owned by thread.c. */
+    struct intr_frame tf;               /* Information for switching */
+    unsigned magic;                     /* Detects stack overflow. */
+    
+    struct file **fd_table;         // thread_create에서 할당
+    int fd_idx;                     // fd테이블에 open spot의 인덱스
+    int exit_status;
 };
 
 /* If false (default), use round-robin scheduler.
@@ -159,13 +168,13 @@ int thread_get_load_avg (void);
 void do_iret (struct intr_frame *tf);
 
 /* Added(project 1) */
-void thread_sleep(int64_t ticks); 				/* Sleeps running thread */
-void thread_awake(int64_t ticks); 				/* Wake up threads from sleep_list */
-void update_next_tick_awake(int64_t ticks);	/* Update next_tick_to_awake after waking threads up */
-int64_t get_next_tick_awake(void);			/* Return next_tick_to_awake */
+void thread_sleep(int64_t ticks);               /* Sleeps running thread */
+void thread_awake(int64_t ticks);               /* Wake up threads from sleep_list */
+void update_next_tick_awake(int64_t ticks); /* Update next_tick_to_awake after waking threads up */
+int64_t get_next_tick_awake(void);          /* Return next_tick_to_awake */
 
 /* Added(project 1) */
-void test_max_priority (void);	/*schedule after comparing current thread and highest priority thread*/
+void test_max_priority (void);  /*schedule after comparing current thread and highest priority thread*/
 bool cmp_priority (const struct list_elem *a, const struct list_elem *b, void *aux UNUSED); /* Compare priority */
 bool cmp_don_priority (const struct list_elem *a, const struct list_elem *b, void *aux UNUSED); /* Compare priority of donation elem */
 
@@ -177,7 +186,7 @@ void donate_priority(void);
 void remove_with_lock(struct lock *lock);
 void refresh_priority(void);
 
-/* Added(Project 1) */ 		// for mlfqs
+/* Added(Project 1) */      // for mlfqs
 void mlfqs_priority(struct thread *t);
 void mlfqs_recent_cpu(struct thread *t);
 void mlfqs_load_avg(void);
@@ -187,3 +196,4 @@ void mlfqs_recal_priority(void);
 void mlfqs_recal_recent_cpu(void);
 
 #endif /* threads/thread.h */
+
